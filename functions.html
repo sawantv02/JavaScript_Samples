@@ -1,0 +1,534 @@
+<html>
+<head>
+	<script>
+	  function log(arg){
+		document.writeln(arg);
+	  }
+	  function identity(x){
+		return x;
+	  }
+	  
+	  function add(x,y){
+		return x+y;
+	  }
+	  
+	  function sub(x,y){
+		return x-y;
+	  }
+	  
+	  function mul(x,y){
+		return x*y;
+	  }
+	  
+	  function identityf(x){
+	    return function(){
+			return x;
+		};
+	  }
+	  
+	  function addf(first){
+		return function(second){
+			return first+second;
+		};
+	  }
+	  
+	  function liftf(binary){
+		return function(first){
+			return function(second){
+				return binary(first,second);
+			};
+		};
+	  }
+	  
+	 /* function curry(binary,first){
+		return function(second){
+			return binary(first,second);
+		};
+	  }*/
+	  
+	  function curry(binary,first){
+		return liftf(binary)(first);
+	  }
+	  
+	  function twice(binary){
+		return function(first){
+			return binary(first,first);
+		};
+	  }
+	  
+	  function reverse(binary){
+		return function(first,second){
+			return binary(second,first);
+		};
+	  }
+	  
+	  function composeu(binaryfirst,binarysecond){
+		return function(a){
+			return binarysecond(binaryfirst(a));
+		};
+		
+	  }
+	  
+	  function composeb(f,g){
+		return function(a,b,c){
+			return g(f(a,b),c);
+		};
+	  }
+	  
+	  function limit(binary,count){
+		
+		return function(a,b){
+			if(count>=1){
+				count-=1;
+				return binary(a,b);
+			}
+			return undefined;
+		};
+	  }
+	  
+	  function from(seed){
+	  
+		return function(){
+			var next=seed;
+			seed+=1;
+			return next;
+		};
+	  }
+	  
+	  function to(f,limit){
+		
+		return function(){
+			var value=f();
+			if(value<limit){
+				return value;
+			}
+			return undefined;
+		}
+	  }
+	  
+	  function fromTo(start,end){
+	   
+	   return to(from(start),end);
+		 /*var next=start;
+		 start+=1;
+		 if(next<end){
+			return next;
+		 }
+		 return undefined;*/
+		 
+	  
+	  }
+	  
+	  function element(arr,f){
+		return function(){
+			if(f===undefined){
+				f=fromTo(0,arr.length);
+			}
+			var index=f();
+			if(index!==undefined){
+				return arr[index];
+				}	
+		};
+	  }
+	  
+	  function collect(f,array){
+		return function(){
+			var value=f();
+			if(f!==undefined){
+				array.push(value);
+			}
+			return value;
+		}
+	  }
+	  
+	  function filter(f,g){
+	  
+		return function(){
+			var value;
+			do{
+				value=f();
+			}
+			while(!g(value) && value!==undefined);
+				return value;
+			
+		};
+
+	  }
+	  
+	  function concat(gen1,gen2){
+		var gen=gen1;
+		return function(){
+			var value=gen();
+			if(value!==undefined){
+				return value;
+			}
+			gen=gen2;
+			return gen();
+		};
+	  
+	  }
+	  
+	  function gensymf(gen){
+		var value=0;
+		return function(){
+			value+=1;
+			return gen+value;
+		}
+	  }
+	  
+	  function fibonaccif(first,second){
+		return function(){
+			var sum=first;
+			first=second;
+			second+=sum;
+			return sum;
+		};
+	  }
+	  
+	  function counter(value){
+		return{
+			up:function(){
+				value+=1;
+				return value;
+			},
+			down:function(){
+				value-=1;
+				return value;
+			}
+		};
+		
+	  }
+	  
+	  function revocable(binary){
+		return{
+			invoke:function(a,b){
+				if(binary!==undefined){
+					return binary(a,b);
+				}
+			},
+			revoke:function(){
+				binary=undefined;
+			}
+			
+		
+		};
+	  
+	  }
+	  
+	  function m(value,source){
+	  
+		return{
+			value:value,
+			source:(typeof source==='string')?source:String(value)
+		};
+	  }
+	  
+	  function addm(a,b){
+		return m(
+				a.value+b.value,"("+a.source+"+"+b.source+")"
+		);
+	  
+	  }
+	  
+	  /*function liftm(binary,sign){
+		return function(a,b){
+			return m(binary(a.value,b.value),"("+a.source+sign+b.source+")");
+		};
+	  }*/
+	  
+	  function liftm(binary,sign){
+		return function(a,b){
+			if(typeof a==='number'){
+			a=m(a);
+			}
+			if(typeof b==='number'){
+			b=m(b);
+			}
+			return m(binary(a.value,b.value),"("+a.source+sign+b.source+")");
+		};
+	  }
+	  
+	  function square(x){
+			return x*x;
+	  }
+	  
+	  function exp(arr){
+		return(Array.isArray(arr)
+		?arr[0](
+		exp(arr[1]),
+		exp(arr[2]))
+		:arr);	
+	  }
+	  
+	  function addg(f){
+		function more(next){
+			if(next===undefined){
+			return f;
+			}
+			f+=next;
+			return more;
+		}
+		
+		if(f!==undefined)
+			return more;	  
+	  }
+	  
+	  
+	  function liftg(binary){
+		return function(first){
+			if(first===undefined){
+			return first;
+			}
+			return function more(next){
+			if(next===undefined){
+			return first;
+			}
+			first= binary(first,next);
+			return more;
+			};
+				
+		};
+	  }
+	  
+	  function arrayg(first){
+	  var arr=[];
+	  function more(next){
+		if(next===undefined){
+			return arr;
+		}
+		
+		arr.push(next);
+		return more;	
+	  }
+	  
+		return more(first);
+	  
+	  
+	  }
+	  
+	  function continuize(unary){
+		return function(callback,arg){
+			return callback(unary(arg));
+			};
+	  }
+	  
+	  function vector(){
+	  var array=[];
+	  return{
+		get:function get(i){
+			return array[i];
+			},
+		append:function append(v){
+			array.push(v);
+		},
+		store:function store(i,v){
+			array[i]=v;
+		}
+			
+	  };
+	  }
+	  
+	  function pubsub(){
+	  var subscribers=[];
+	  return{
+		subscribe:function(log){
+		subscribers.push(log);
+		},
+		publish:function(publish){
+			var i,length=subscribers.length;
+			for(i=0;i<length;i++){
+				subscribers[i](publish);
+			}
+		}	
+	  };
+	  }
+	  
+	  my_pubsub=pubsub();
+	  my_pubsub.subscribe(log);
+	  my_pubsub.publish("It works!");
+	  
+	  
+	  /*
+	  myvector=vector();
+	  myvector.append(7);
+	  myvector.store(1,8);
+	  log(myvector.get(0));
+	  log(myvector.get(1));
+	  
+	  
+	  var sqrtc=continuize(Math.sqrt);
+	  sqrtc(alert,81);
+	  
+	  log(arrayg());
+	  log(arrayg(3)());
+	  log(arrayg(3)(4)(5)());
+	  
+	  log(liftg(mul)());
+	  log(liftg(mul)(3)());
+	  log(liftg(mul)(3)(0)(4)());
+	  log(liftg(mul)(1)(2)(4)(8)());
+	  
+	  log(addg());
+	  log(addg(2)());
+	  log(addg(2)(7)());
+	  log(addg(3)(0)(4)());
+	  log(addg(1)(2)(4)(8)());
+	  
+	  var nae=[Math.sqrt,[add,[square,3],[square,4]]];
+	  log(exp(nae));
+	  
+	  var sae=[mul,5,11];
+	  log(exp(sae));
+	  log(exp(42));
+	  
+	  
+	  var addm=liftm(add,"+");
+	  log(JSON.stringify(addm(3,4)));
+	  
+	  var addm=liftm(add,"+");
+	  log(JSON.stringify(addm(m(3),m(4))));
+	  log(JSON.stringify(liftm(mul,"*")(m(3),m(4))));
+	  
+	  
+	  log(JSON.stringify(addm(m(3),m(4))));
+	  log(JSON.stringify(addm(m(1),m(Math.PI,"pi"))));
+	  
+	  log(JSON.stringify(m(1)));
+	  log(JSON.stringify(m(Math.PI,"pi")));
+	  
+	  
+	  var rev=revocable(add);
+	  var add_rev=rev.invoke;
+	  log(add_rev(3,4));
+	  rev.revoke();
+	  log(add_rev(5,6));
+	  
+	  
+	  var object=counter(10);
+	  var up=object.up;
+	  var down=object.down;
+	  
+	  log(up());
+	  log(down());
+	  log(down());
+	  log(up());
+	  
+	  
+	  var fib=fibonaccif(0,1);
+	  log(fib());
+	  log(fib());	
+	  log(fib());
+	  log(fib());
+	  log(fib());
+	  log(fib());
+
+	  
+	  
+	  var geng=gensymf("G");
+	  var genh=gensymf("H");
+	  log(geng());
+	  log(genh());
+	  log(geng());
+	  log(genh());	  
+	  
+	  
+	  var con=concat(fromTo(0,3),fromTo(0,3));
+	  log(con());
+	  log(con());
+	  log(con());
+	  log(con()); 
+	  log(con());
+	  log(con());	  
+	  
+	  
+	  var fil=filter(fromTo(0,5),function third(value){return (value%3)===0;});
+	  log(fil());
+	  log(fil());
+	  log(fil());
+	  
+	  
+	  var array=[];
+	  var col=collect(fromTo(0,2),array);
+	  log(col());
+	  log(col());
+	  log(col());
+	  log(array);
+	  
+	  
+	  var ele1=element(['a','b','c','d'],fromTo(1,3));
+	  log(ele1());
+	  log(ele1());
+	  log(ele1());
+	  
+	  var ele=element(['a','b','c','d']);
+	  log(ele());
+	  log(ele());
+	  log(ele());
+	  log(ele());
+	  log(ele());
+	  
+	  
+	  log(identity(4));
+	  log(add(3,4));
+	  log(sub(3,4));
+	  log(mul(3,4));
+	  
+	  var three=identityf(3);
+	  log(three());
+	  
+	  log(addf(5)(6));
+	  
+	  var addf=liftf(add);
+	  log(addf(9)(8));
+	  log(liftf(mul)(9)(8));
+	  
+	  var add3=curry(add,3);
+	  log(add3(5));
+	  
+	  log(curry(mul,5)(6))
+	  
+	  //var inc=curry(add,1);
+	  //var inc=addf(1);
+	  var inc=liftf(add)(1);
+	  log(inc(5));
+	  log(inc(inc(5)));
+	  
+	  log(add(11,11));
+	  var doubl=twice(add);
+	  log(doubl(11));
+	  var square=twice(mul);
+	  log(square(11));
+	  
+	  var bus=reverse(sub);
+	  log(bus(3,2));
+	  
+	  log(composeu(doubl,square)(5));
+	  log(composeb(add,mul)(2,3,7));
+	  
+	  var add_ltd=limit(add,1);
+	  log(add_ltd(2,6));
+	  log(add_ltd(2,7));
+	  
+	  var index=from(0);
+	  log(index());
+	  log(index());
+	  log(index());
+	  
+	  var index1=to(from(1),3);
+	  log(index1());
+	  log(index1());
+	  log(index1());
+	  
+	  var index2=fromTo(0,3);
+	  log(index2());
+	  log(index2());
+	  log(index2());
+	  log(index2());
+	  */
+	  
+
+	</script>
+</head>
+<body>
+</body>
+</html>
